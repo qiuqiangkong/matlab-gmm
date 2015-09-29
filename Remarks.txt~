@@ -1,0 +1,20 @@
+% 2015.9.24 gmm demo
+% ===============================
+function test
+close all
+addpath('/homes/qkong/my_code2015.5-/matlab/toolbox/voicebox')
+
+X = GenerateData1();
+mix_num = 3;
+[prior, mu, Sigma] = Gmm(X, mix_num);
+[prior, mu, Sigma] = Gmm(X, mix_num, 'cov_type', 'diag', 'cov_thresh', 1e-4, 'restart_num', 1, 'iter_num', 100);
+
+end
+
+function X = GenerateData1()
+N = 1000;
+X1 = mvnrnd([0,0], [0.5, 0.2; 0.2, 0.3]/4, N);
+X2 = mvnrnd([2,2], [0.3, -0.2; -0.2, 0.5]/4, N);
+X3 = mvnrnd([4,0], [0.5, 0; 0, 0.3]/4, N);
+X = [X1; X2; X3];
+end
