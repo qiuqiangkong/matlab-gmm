@@ -3,12 +3,16 @@
 %          n:sample_num, k:center_num, p:dimension, i:iter_num
 %          Gmm complexity: O(nkpi), definition of nkpi is same as above
 % OTHERS:  It seems restart_num of kmeans is not important. I am not sure. Use 1 is OK.  
+%          Because of local minimum, so try to run several times. 
 % AUTHOR:  QIUQIANG KONG, Queen Mary University of London
 % Created: 16-09-2015
 % Modified: 18-09-2015 Add varargin parameters
 %                      Add minimum of cov
 %           19-09-2015 Add some remarks
 %           23-09-2015 Add log likelihood
+%           15-11-2015 Modify output format to mu: p*M, Sigma: p*p*M
+%           17-11-2015 Modify restart number to 1
+%           18-11-2015 add: if min(eig(Sigma)) < thresh, then + a*I
 % -----------------------------------------------------------
 % Remarks: need voicebox (kmeans.m), error_ellipse.m
 % input:   
@@ -20,18 +24,15 @@
 %   cov_type        'full' or 'diag'
 %   cov_thresh      the minimum of cov
 % output:
-%   pi              size: M*1; dim 1: mix num 
-%   mu              size: p*M; dim 1: feature dim, dim 2: mix num    
+%   pi              size: M; dim 1: mix num 
+%   mu              size: p*M; dim 1: feature dim, dim 2: mix num
 %   Sigma           size: p*p*M; dim 1,2: feature dim, dim 3: mix num
 %   loglik          log likelihood of current model
 % Ref:     Chap 9 <Pattern Analysis and Machine Learning>
 %          voicebox toolbox
 % ===========================================================
-function [prior, mu, Sigma, loglik] = Gmm(X, mix, varargin)
-restart_num = 10;       % the times of restart kmeans
-iter_num = 100;         % the maximum of EM iteration
-cov_type = 'diag';      % 'full' or 'diag'
-cov_thresh = 1e-4;      % the thresh of covariance
+function [prior, mu, Sigma, loglik] = Gmm(X, mix_num, varargin)
+
 for i1 = 1:2:length(varargin)
     switch varargin{i1}
         case 'cov_type'
@@ -44,9 +45,21 @@ for i1 = 1:2:length(varargin)
             iter_num = varargin{i1+1};
     end
 end
+if (~exist('cov_type'))
+    cov_type = 'diag';      % 'full' or 'diag'
+end
+if (~exist('cov_thresh'))
+    cov_thresh = 1e-4;      % the thresh of covariance
+end
+if (~exist('restart_num'))
+    restart_num = 1;       % the times of restart kmeans
+end
+if (~exist('iter_num'))
+    iter_num = 100;         % the maximum of EM iteration
+end
 
 % Init gmm by kmeans
-[pi0, mu0, Sigma0] = Gmm_init_by_kmeans(X, mix, restart_num, cov_thresh);
+[pi0, mu0, Sigma0] = Gmm_init_by_kmeans(X, mix_num, restart_num, cov_thresh);
 
 % EM algorighm for Gmm
 [prior, mu, Sigma, loglik] = Gmm_em(X, pi0, mu0, Sigma0, iter_num, cov_type, cov_thresh);
@@ -58,12 +71,13 @@ end
 end
 
 % --------- Init gmm by kmeans ---------
-function [pi0, mu0, Sigma0] = Gmm_init_by_kmeans(X, mix, restart_num, cov_thresh)
+function [pi0, mu0, Sigma0] = Gmm_init_by_kmeans(X, mix_num, restart_num, cov_thresh)
 % restart kmeans for several times
+[N,p] = size(X);
 err = inf;
 for i1 = 1:restart_num
-    [mu0_curr, err_curr, indi_curr] = kmeans(X, mix, 'f');   
-    mu0_curr = mu0_curr';       % u0: dim 1: feature dim, dim 2: feature dimmix num
+    [mu0_curr, err_curr, indi_curr] = kmeans(X, mix_num, 'f');
+    mu0_curr = mu0_curr';
     if err_curr < err
         err = err_curr;
         mu0 = mu0_curr;
@@ -72,45 +86,46 @@ for i1 = 1:restart_num
 end
 
 % calculate pi0
-pi0 = zeros(mix,1);
-for i1 = 1:mix
+pi0 = zeros(1,mix_num);
+for i1 = 1:mix_num
     pi0(i1) = sum(indi==i1);
 end
 pi0 = pi0 / length(indi);
 
 % calculate Sigma0
-for i1 = 1:mix
+for i1 = 1:mix_num
     X_curr = X(indi==i1, :);
-    mu0_curr = mu0(:, i1);
+    mu0_curr = mu0(:,i1);
     Sigma0_curr = cov(bsxfun(@minus, X_curr, mu0_curr'));
-    Sigma0(:,:,i1) = Sigma0_curr;               % dim 1, dim 2: feature dim, dim 3: mix num
-    
-    if max(max(Sigma0(:,:,i1))) < cov_thresh    % prevent cov from being too small
-        Sigma0(:,:,i1) = cov_thresh * eye(size(Sigma0(:,:,i1),1));
+
+    if min(eig(Sigma0_curr)) < cov_thresh    % prevent cov from being too small
+        Sigma0(:,:,i1) = Sigma0_curr + cov_thresh * eye(p);
+    else
+        Sigma0(:,:,i1) = Sigma0_curr;               % dim 1, dim 2: feature dim, dim 3: mix num
     end
 end
 end
 
 % --------- EM algorighm for Gmm ---------
 function [prior, mu, Sigma, loglik] = Gmm_em(X, prior, mu, Sigma, iter_num, cov_type, cov_thresh)
-M = length(prior);
-N = size(X, 1);
+M = length(prior);  % mix num
+[N,p] = size(X);
 pre_ll = -inf;
 
-for k = 1:iter_num
+for k = 1:iter_num    
     % E step
-    p_mat = zeros(N, M);
+    p_xn_given_zn = zeros(N, M);
     for i1 = 1:M
-        p_mat(:, i1) = mvnpdf(X, mu(:,i1)', Sigma(:,:,i1));
+        p_xn_given_zn(:, i1) = mvnpdf(X, mu(:,i1)', Sigma(:,:,i1));
     end
 
-    numer = bsxfun(@times, p_mat, prior');     % dim 1: N, dim 2: mix num
+    numer = bsxfun(@times, p_xn_given_zn, prior);     % dim 1: N, dim 2: mix num
     denor = sum(numer, 2);                  % dim 1: N
     gamma = bsxfun(@rdivide, numer, denor);  % dim 1: N, dim 2: mix num
 
     % M step
-    Nk = sum(gamma, 1)';     % dim 1: mix num
-    mu = bsxfun(@rdivide, (X' * gamma), Nk');
+    Nk = sum(gamma, 1);     % dim 1: mix num
+    mu = bsxfun(@rdivide, (X' * gamma), Nk);
 
     for i1 = 1:M
         x_minus_mu = bsxfun(@minus, X, mu(:,i1)');
@@ -118,25 +133,36 @@ for k = 1:iter_num
         if (cov_type=='diag')
             Sigma(:,:,i1) = diag(diag(Sigma(:,:,i1)));
         end
-        if max(max(Sigma(:,:,i1))) < cov_thresh    % prevent cov from being too small
-            Sigma(:,:,i1) = cov_thresh * eye(size(Sigma(:,:,i1),1));
+        if min(eig(Sigma(:,:,i1))) < cov_thresh    % prevent cov from being too small
+            Sigma(:,:,i1) = Sigma(:,:,i1) + cov_thresh * eye(p);
         end
         prior = Nk / N;
     end
     
-    p = zeros(N,1);
+    % Get likelihood
+    p_xn = zeros(N,1);
     for i1 = 1:M
-        p = p + prior(i1) * mvnpdf(X, mu(:,i1)', Sigma(:,:,i1));
+        p_xn = p_xn + prior(i1) * mvnpdf(X, mu(:,i1)', Sigma(:,:,i1));
     end
-    loglik = sum(log(p));
+    loglik = sum(log(p_xn));
     
     if (loglik-pre_ll<log(1.0001)) break;
     else pre_ll = loglik; end
     
-%     % Do not delete! draw contour step by step
-%     for i1 = 1:M
-%         error_ellipse(Sigma(:,:,i1), mu(:,i1), 'style', 'r'), hold on
-%     end
+    % Debug. draw contour step by step
+%     DebugPlot(X, gamma, mu, Sigma);
 end
 
+end
+
+% Debug. draw contour step by step
+function DebugPlot(X, gamma, mu, Sigma)
+    M = size(mu,2);
+    scatter(X(:,1), X(:,2), [], gamma), hold on, axis([-2 6 -1.5 3.5])
+    pause
+    for i1 = 1:M
+        error_ellipse(Sigma(i1,:,:), mu(i1,:), 'style', 'r', 'conf', 0.9)
+    end
+    hold off
+    pause
 end
