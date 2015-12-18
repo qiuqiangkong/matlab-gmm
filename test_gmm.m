@@ -2,6 +2,7 @@
 % AUTHOR:   QIUQIANG KONG
 % Created:  2015.09.20
 % Modified: 2015.11.17 Add annoatations
+%           2015.12.18 Add usage of Gmmpdf
 % ===========================================================
 function test_gmm
 close all
@@ -18,6 +19,9 @@ scatter(X(:,1), X(:,2), '.'); axis([-2 12 -2 12]); hold on
 mix_num = 6;
 [prior, mu, Sigma, loglik] = Gmm(X, mix_num);
 [prior, mu, Sigma, loglik] = Gmm(X, mix_num, 'cov_type', 'diag', 'cov_thresh', 1e-4, 'restart_num', 1, 'iter_num', 100);
+
+% calculate probability using gmm
+probs = Gmmpdf(X, prior, mu, Sigma);
 
 % plot gaussians
 for m = 1:mix_num
