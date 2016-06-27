@@ -13,6 +13,7 @@
 %           15-11-2015 Modify output format to mu: p*M, Sigma: p*p*M
 %           17-11-2015 Modify restart number to 1
 %           18-11-2015 add: if min(eig(Sigma)) < thresh, then + a*I
+%           27-06-2015 Modify kmeans(X, mix_num, 'f') to kmeans(X, mix_num)
 % -----------------------------------------------------------
 % Remarks: need voicebox (kmeans.m), error_ellipse.m
 % input:   
@@ -76,7 +77,7 @@ function [pi0, mu0, Sigma0] = Gmm_init_by_kmeans(X, mix_num, restart_num, cov_th
 [N,p] = size(X);
 err = inf;
 for i1 = 1:restart_num
-    [mu0_curr, err_curr, indi_curr] = kmeans(X, mix_num, 'f');
+    [mu0_curr, err_curr, indi_curr] = kmeans(X, mix_num);
     mu0_curr = mu0_curr';
     if err_curr < err
         err = err_curr;

@@ -3,6 +3,7 @@
 % Created:  2015.09.20
 % Modified: 2015.11.17 Add annoatations
 %           2015.12.18 Add usage of Gmmpdf
+%           2016.06.27 Annotate Some lines
 % ===========================================================
 function test_gmm
 close all
@@ -17,7 +18,7 @@ scatter(X(:,1), X(:,2), '.'); axis([-2 12 -2 12]); hold on
 
 % run gmm
 mix_num = 6;
-[prior, mu, Sigma, loglik] = Gmm(X, mix_num);
+% [prior, mu, Sigma, loglik] = Gmm(X, mix_num);     % detail usage is below
 [prior, mu, Sigma, loglik] = Gmm(X, mix_num, 'cov_type', 'diag', 'cov_thresh', 1e-4, 'restart_num', 1, 'iter_num', 100);
 
 % calculate probability using gmm
