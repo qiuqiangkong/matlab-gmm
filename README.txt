@@ -7,10 +7,6 @@ Modify: 27-06-2016 v0.0.2 (Latest Version)
 ==========================================
 
 Usage:
-1. Download voicebox toolbox
-2. run test_gmm.m
+1. run test_gmm.m
 
 ==========================================
-
-Q.A.
-1. if you met 'Error using fileparts'. Just run it another time, it will be fine. (Maybe a bug in voicebox)

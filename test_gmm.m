@@ -7,7 +7,7 @@
 % ===========================================================
 function test_gmm
 close all
-addpath('voicebox');    % need kmeans in voicebox
+%addpath('voicebox');    % need kmeans in voicebox
 
 % use pesudo ranodm
 % rng(0)

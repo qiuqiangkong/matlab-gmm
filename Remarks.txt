@@ -4,3 +4,6 @@ This use kmeans from voice box.
 
 2015.11.17
 Add annotations, rearrange files
+
+2016.06.27
+Use stats toolbox's kmeans instead of voicebox's kmeans
