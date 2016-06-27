@@ -13,7 +13,7 @@
 %           15-11-2015 Modify output format to mu: p*M, Sigma: p*p*M
 %           17-11-2015 Modify restart number to 1
 %           18-11-2015 add: if min(eig(Sigma)) < thresh, then + a*I
-%           27-06-2015 Use stats toolbox's kmeans instead of voicebox's
+%           27-06-2016 Use stats toolbox's kmeans instead of voicebox's
 % -----------------------------------------------------------
 % Remarks: need voicebox (kmeans.m), error_ellipse.m
 % input:   
