@@ -1,5 +1,5 @@
 function h=error_ellipse(varargin)
-% ERROR_ELLIPSE - plot an error ellipse, or ellipsoid, defining confidence region
+% ERROR_ELLIPSE - plot an error ellipse(ÍÖÔ²), or ellipsoid£¨ÍÖÔ²Ìå£©, defining confidence region
 %    ERROR_ELLIPSE(C22) - Given a 2x2 covariance matrix, plot the
 %    associated error ellipse, at the origin. It returns a graphics handle
 %    of the ellipse that was drawn.
@@ -32,7 +32,7 @@ default_properties = struct(...
   'conf', 0.5, ... % Percent confidence/100
   'scale', 1, ... % Scale factor, e.g. 1e-3 to plot m as km
   'style', '', ...  % Plot style
-  'clip', inf); % Clipping radius
+  'clip', inf); % Clipping radius£¨¼ô²Ã°ë¾¶£©
 
 if length(varargin) >= 1 & isnumeric(varargin{1})
   default_properties.C = varargin{1};
