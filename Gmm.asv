@@ -115,7 +115,7 @@ end
 function [prior, mu, Sigma, loglik] = Gmm_em(X, prior, mu, Sigma, iter_num, cov_type, cov_thresh)
 M = length(prior);  % mix num
 [N,p] = size(X);
-pre_ll = -inf; % pre_llµÄº¬ÒåÊÇÉ¶
+pre_ll = -inf; %
 
 for k = 1:iter_num    
     % E step

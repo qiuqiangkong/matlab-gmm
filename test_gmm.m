@@ -1,12 +1,14 @@
 % SUMMARY:  This is a simple demo for using Gmm
 % AUTHOR:   QIUQIANG KONG
 % Created:  2015.09.20
-% Modified: 2015.11.17 Add annoatations
+% Modified: 2015.11.17 Add annoatations（注释）
 %           2015.12.18 Add usage of Gmmpdf
 % ===========================================================
-function test_gmm
+
 close all
-addpath('voicebox');    % need kmeans in voicebox
+%addpath('voicebox');    % need kmeans in voicebox
+                        % Gmm.m里说后来不用voicebox里的kmeans，
+                        %而用stat toolbox's kmeans
 
 % use pesudo ranodm
 % rng(0)
@@ -26,7 +28,6 @@ probs = Gmmpdf(X, prior, mu, Sigma);
 % plot gaussians
 for m = 1:mix_num
     error_ellipse(Sigma(:,:,m), mu(:,m), 'style', 'r'), hold on
-end
 end
 
 % generate data
